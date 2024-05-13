@@ -8,6 +8,8 @@ struct Material
 	glm::vec3 Albedo{ 1.0f };
 	float Roughness = 1.0f;
 	float Metalic = 0.0f;
+
+	bool isReflective = false;
 };
 
 struct Sphere

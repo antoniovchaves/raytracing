@@ -21,11 +21,13 @@ public:
 		Material& firstSphere = m_Scene.Materials.emplace_back();
 		firstSphere.Albedo = { 1.0f, 0.0f, 1.0f };
 		firstSphere.Roughness = 0.0f;
+		firstSphere.isReflective = true;
 
 
 		Material& secondSphere = m_Scene.Materials.emplace_back();
 		secondSphere.Albedo = { 0.2f, 0.3f, 1.0f };
-		secondSphere.Roughness = 0.1f;
+		secondSphere.Roughness = 0.0f;
+		secondSphere.isReflective = true;
 
 		{
 			Sphere sphere;
@@ -38,8 +40,8 @@ public:
 
 		{
 			Sphere sphere;
-			sphere.Position = { 0.0f, -101.0f, 0.0f };
-			sphere.Radius = 100.0f;
+			sphere.Position = { 3.0f, 0.0f, 0.0f };
+			sphere.Radius = 2.0f;
 			sphere.MaterialIndex = 1;
 
 			m_Scene.Spheres.push_back(sphere);
