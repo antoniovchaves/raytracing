@@ -84,38 +84,53 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 		{
 			Renderer::HitPayload payload = TraceRay(ray);
 
+			
+
 			if (payload.HitDistance < 0.0f)
-			{
+			{	
 				glm::vec3 skyColor = glm::vec3(0.0f);
 				color += skyColor * multiplier;
 				break;
-			}
-		
-			glm::vec3 randomPoint = glm::vec3(-1.0f, -1.0f, -1.0f); //Walnut::Random::Vec3(-0.12f, -0.1f);
+			} 
+
+			glm::vec3 randomPoint = glm::vec3(-1.0f, -1.0f, -1.0f); // Walnut::Random::Vec3(-0.12f, -0.1f);
 			glm::vec3 pointOnLight =  glm::vec3((float)i, -1.0f, (float)j);//glm::vec3(-1.0f);
 
 			glm::vec3 lightDir = glm::normalize(randomPoint + pointOnLight);
 
 			float d = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(alngulo entre eles)
 
+			Ray lightRay;
+			lightRay.Origin = payload.WorldPosition;
+			lightRay.Direction = -lightDir;
+
+
+			Renderer::HitPayload lightPayload = TraceRay(lightRay);
+
 			const Sphere& sphere = m_ActiveScene->Spheres[payload.ObjectIndex];
 			const Material& material = m_ActiveScene->Materials[sphere.MaterialIndex];
 
-			glm::vec3 sphereColor = material.Albedo;
-			sphereColor *= d;
+			if (lightPayload.HitDistance < 0.0f)
+			{
+				glm::vec3 sphereColor = material.Albedo;
+				sphereColor *= d;
 
-			color += sphereColor * multiplier;
+				color += sphereColor * multiplier;
+			}
+			else
+			{
+				color += glm::vec3(0.0f)  * d;
+			}
 
 			ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
+
+			ray.Direction = glm::reflect(ray.Direction,
+				payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
+
 			
-			if (material.isReflective)
-			{
-				ray.Direction = glm::reflect(ray.Direction,
-					payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.1f, 0.1f)
-				);
-				multiplier *= 0.7f;
-			}
-			else { multiplier *= 0.5f; }
+			multiplier *= 0.4f;
+
+			
 		}
 		
 	}
@@ -142,7 +157,6 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 		if (discriminant < 0.0f)
 			continue;
 
-		// float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a); // não utilizado atualmente
 		float closestT = (-b - glm::sqrt(discriminant)) / (2.0f * a);
 
 		if (closestT > 0.0f && closestT < hitDistance)
