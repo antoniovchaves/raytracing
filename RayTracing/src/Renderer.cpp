@@ -78,13 +78,12 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	glm::vec3 color(0.0f);
 	float multiplier = 1.0f;
 	int repeticoes = 2;
+
 	for (int i = 0; i < repeticoes; i++)
 	{	
 		for (int j = 0; j < repeticoes; j++)
 		{
 			Renderer::HitPayload payload = TraceRay(ray);
-
-			
 
 			if (payload.HitDistance < 0.0f)
 			{	
@@ -138,10 +137,28 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	return glm::vec4(color, 1.0f);
 }
 
+std::pair<float, float> Renderer::intersectBox(const Ray& ray, const Box& box)
+{
+	glm::vec3 invDir = 1.0f / ray.Direction;
+
+	glm::vec3 tMin = (box.Position - ray.Origin) * invDir;
+	glm::vec3 tMax = (box.Position + glm::vec3(box.Width, box.Height, box.Depth) - ray.Origin) * invDir;
+
+	glm::vec3 realMin = glm::min(tMin, tMax);
+	glm::vec3 realMax = glm::max(tMin, tMax);
+
+	float minVal = glm::max(realMin.x, glm::max(realMin.y, realMin.z));
+	float maxVal = glm::min(realMax.x, glm::min(realMax.y, realMax.z));
+
+	return { minVal, maxVal };
+}
+
+
 Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 {
-	int closestSphere = -1;
+	int closestObject = -1;
 	float hitDistance = std::numeric_limits<float>::max(); // também poderia utilizar o FLT_MAX
+	int indentifier = -1;
 
 	for (size_t i = 0; i < m_ActiveScene->Spheres.size(); i++)
 	{
@@ -162,43 +179,68 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 		if (closestT > 0.0f && closestT < hitDistance)
 		{
 			hitDistance = closestT;
-			closestSphere = (int)i;
+			closestObject = (int)i;
+			indentifier = 0;
 		}
 
 	}
 
-	if (closestSphere < 0)
+	for (size_t i = 0; i < m_ActiveScene->Boxes.size(); i++)
+	{
+		const Box& box = m_ActiveScene->Boxes[i];
+		// Calcula a interseção do raio com a caixa
+		auto [tmin, tmax] = intersectBox(ray, box);
+
+		// Se houver interseção e a distância for menor que a menor encontrada até agora
+		if (tmax >= 0 && tmin <= tmax && tmax < hitDistance)
+		{
+			hitDistance = tmax;
+			closestObject = (int)i;
+			indentifier = 1;
+		}
+	}
+
+	if (closestObject < 0)
 		return Miss(ray);
 
-	return ClosestHit(ray, hitDistance, closestSphere);
+	return ClosestHit(ray, hitDistance, closestObject, indentifier);
 
 	
 }
 
-Renderer::HitPayload Renderer::ClosestHit(const Ray& ray, float hitDistance, int objectIndex)
+Renderer::HitPayload Renderer::ClosestHit(const Ray& ray, float hitDistance, int objectIndex, int indentifier)
 {
 	Renderer::HitPayload payload;
 	payload.HitDistance = hitDistance;
 	payload.ObjectIndex = objectIndex;
 
-	const Sphere& closestSphere = m_ActiveScene->Spheres[objectIndex];
-	const Material& material = m_ActiveScene->Materials[closestSphere.MaterialIndex];
-	float radius = closestSphere.Radius;
-	glm::vec3 origin = ray.Origin - closestSphere.Position;
+	if (indentifier == 0)
+	{
+		const Sphere& closestObject = m_ActiveScene->Spheres[objectIndex];
 
+		const Material& material = m_ActiveScene->Materials[closestObject.MaterialIndex];
 
-	payload.WorldPosition = origin + ray.Direction * hitDistance;
-	payload.WorldNormal = glm::normalize(payload.WorldPosition);
+		glm::vec3 origin = ray.Origin - closestObject.Position;
 
-	payload.WorldPosition += closestSphere.Position;
+		payload.WorldPosition = origin + ray.Direction * hitDistance;
+		payload.WorldNormal = glm::normalize(payload.WorldPosition);
 
-	glm::vec3 lightDir = glm::normalize(glm::vec3(-1, -1, -1));
+		payload.WorldPosition += closestObject.Position;
+	}
+	else {
+		const Box& closestObject = m_ActiveScene->Boxes[objectIndex];
 
-	float d = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(alngulo entre eles)
+		const Material& material = m_ActiveScene->Materials[closestObject.MaterialIndex];
 
+		glm::vec3 origin = ray.Origin - closestObject.Position;
 
-	glm::vec3 sphereColor = material.Albedo;
-	sphereColor *= d;
+		payload.WorldPosition = origin + ray.Direction * hitDistance;
+		payload.WorldNormal = glm::normalize(payload.WorldPosition);
+
+		payload.WorldPosition += closestObject.Position + 
+			glm::vec3(closestObject.Width, closestObject.Height, closestObject.Depth);
+	}
+
 
 	return payload;
 }

@@ -20,8 +20,19 @@ struct Sphere
 	int MaterialIndex = 0;
 };
 
+struct Box
+{
+	glm::vec3 Position{ 0.0f };
+	float Width = 0.5f;
+	float Height = 0.5f;
+	float Depth = 0.5f;
+
+	int MaterialIndex = 0;
+};
+
 struct Scene
 {
 	std::vector<Sphere> Spheres;
 	std::vector<Material> Materials;
+	std::vector<Box> Boxes;
 };

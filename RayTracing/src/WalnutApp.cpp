@@ -23,11 +23,15 @@ public:
 		firstSphere.Roughness = 0.0f;
 		firstSphere.isReflective = true;
 
-
 		Material& secondSphere = m_Scene.Materials.emplace_back();
 		secondSphere.Albedo = { 0.2f, 0.3f, 1.0f };
 		secondSphere.Roughness = 0.0f;
 		secondSphere.isReflective = true;
+
+		Material& firstBox = m_Scene.Materials.emplace_back();
+		firstBox.Albedo = { 1.0f, 0.0f, 1.0f };
+		firstBox.Roughness = 0.0f;
+		firstBox.isReflective = false;
 
 		{
 			Sphere sphere;
@@ -46,6 +50,15 @@ public:
 
 			m_Scene.Spheres.push_back(sphere);
 		}
+
+		Box& box = m_Scene.Boxes.emplace_back();
+		box.Position = { 1.0f, 2.0f, 1.0f };
+		box.Width = 10.0f;
+		box.Height = 0.1f;
+		box.Depth = 10.0f;
+		box.MaterialIndex = 2;
+
+
 	}
 	virtual void OnUpdate(float ts) override 
 	{
