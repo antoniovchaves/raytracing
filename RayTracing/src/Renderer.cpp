@@ -92,7 +92,7 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 				break;
 			} 
 
-			glm::vec3 randomPoint = Walnut::Random::Vec3(-0.12f, -0.1f);
+			glm::vec3 randomPoint = Walnut::Random::Vec3(-0.2f, -0.1f);
 			glm::vec3 pointOnLight =  glm::vec3((float)i, -1.0f, (float)j);//glm::vec3(-1.0f);
 
 			glm::vec3 lightDir = glm::normalize(randomPoint + pointOnLight);
@@ -114,6 +114,9 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 				glm::vec3 sphereColor = material.Albedo;
 				sphereColor *= d;
 
+				ray.Direction = glm::reflect(ray.Direction,
+					payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
+
 				color += sphereColor * multiplier;
 			}
 			else
@@ -123,10 +126,6 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 
 			ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
 
-			ray.Direction = glm::reflect(ray.Direction,
-				payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
-
-			
 			multiplier *= 0.4f;
 
 			
