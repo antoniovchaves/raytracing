@@ -92,7 +92,7 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 				break;
 			} 
 
-			glm::vec3 randomPoint = glm::vec3(-1.0f, -1.0f, -1.0f); // Walnut::Random::Vec3(-0.12f, -0.1f);
+			glm::vec3 randomPoint = Walnut::Random::Vec3(-0.12f, -0.1f);
 			glm::vec3 pointOnLight =  glm::vec3((float)i, -1.0f, (float)j);//glm::vec3(-1.0f);
 
 			glm::vec3 lightDir = glm::normalize(randomPoint + pointOnLight);
