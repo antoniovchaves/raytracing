@@ -55,10 +55,23 @@ public:
 		box.Depth = 10.0f;
 		box.MaterialIndex = 2;
 
+		// Configurando os planos da caixa
+		Plane p1(1, 0, 0, -box.Position.x);
+		Plane p2(-1, 0, 0, box.Position.x + box.Width);
+		Plane p3(0, 1, 0, -box.Position.y);
+		Plane p4(0, -1, 0, box.Position.y + box.Height);
+		Plane p5(0, 0, 1, -box.Position.z);
+		Plane p6(0, 0, -1, box.Position.z + box.Depth);
+
+		// Inicializando a caixa com os seis planos
+		box.SetPlanes(p1, p2, p3, p4, p5, p6);
+
+
 	}
 	virtual void OnUpdate(float ts) override 
 	{
-		m_Camera.OnUpdate(ts);
+		if (m_Camera.OnUpdate(ts))
+			m_Renderer.ResetFrameIndex();
 	}
 	virtual void OnUIRender() override
 	{
@@ -68,7 +81,15 @@ public:
 		{
 			Render();
 		}
+
+		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
+
+		if (ImGui::Button("Reset"))
+			m_Renderer.ResetFrameIndex();
+
 		ImGui::End();
+
+		
 
 		ImGui::Begin("Scene");
 
@@ -118,7 +139,8 @@ public:
 		ImGui::End();
 		ImGui::PopStyleVar();
 
-		Render();
+		if (m_Renderer.GetFrameIndex() < 100)
+			Render();
 	}
 	void Render() 
 	{
