@@ -50,9 +50,9 @@ public:
 
 		Box& box = m_Scene.Boxes.emplace_back();
 		box.Position = { 1.0f, 2.0f, 1.0f };
-		box.Width = 10.0f;
-		box.Height = 0.1f;
-		box.Depth = 10.0f;
+		box.Width = 1.0f;
+		box.Height = 1.0f;
+		box.Depth = 1.0f;
 		box.MaterialIndex = 2;
 
 		// Configurando os planos da caixa
@@ -65,6 +65,58 @@ public:
 
 		// Inicializando a caixa com os seis planos
 		box.SetPlanes(p1, p2, p3, p4, p5, p6);
+
+
+		// Configurando os planos da caixa
+		{
+			Plane p1;
+			p1.a = 1.0f;
+			p1.d = -box.Position.x;
+
+			m_Scene.Planes.push_back(p1);
+		}
+
+		{
+			Plane p2;
+			p2.a = -1.0f;
+			p2.d = box.Position.x + box.Width;
+
+			m_Scene.Planes.push_back(p2);
+		}
+
+		{
+			Plane p3;
+			p3.b = 1;
+			p3.d = -box.Position.y;
+
+			m_Scene.Planes.push_back(p3);
+		}
+
+		{
+			Plane p4;
+			p4.b = -1.0f;
+			p4.d = box.Position.y + box.Height;
+
+			m_Scene.Planes.push_back(p4);
+		}
+
+		{
+			Plane p5;
+			p5.c = 1.0f;
+			p5.d = -box.Position.z;
+
+			m_Scene.Planes.push_back(p5);
+		}
+
+
+		{
+			Plane p6;
+			p6.c = -1.0f;
+			p6.d = box.Position.z + box.Depth;
+
+			m_Scene.Planes.push_back(p6);
+		}
+
 
 
 	}

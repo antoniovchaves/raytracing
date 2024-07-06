@@ -48,6 +48,7 @@ private:
 	HitPayload Miss(const Ray& ray);
 
 	std::pair<float, float> intersectBox(const Ray& ray, const Box& box);
+	std::pair<float, float> Renderer::intersectPlane(const Ray& ray, const Plane& plane);
 	uint32_t m_FrameIndex = 1;
 
 private:

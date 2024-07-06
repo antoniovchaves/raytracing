@@ -101,7 +101,6 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	{	
 		for (int j = 0; j < repeticoes; j++)
 		{
-
 			Renderer::HitPayload payload = TraceRay(ray);
 
 			if (payload.HitDistance < 0.0f)
@@ -118,60 +117,46 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 
 			float d = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(alngulo entre eles)
 
-			
-				Ray lightRay;
-				lightRay.Origin = payload.WorldPosition;
-				lightRay.Direction = -lightDir;
+			Ray lightRay;
+			lightRay.Origin = payload.WorldPosition;
+			lightRay.Direction = -lightDir;
 
+			Renderer::HitPayload lightPayload = TraceRay(lightRay);
 
-				Renderer::HitPayload lightPayload = TraceRay(lightRay);
+			const Sphere& sphere = m_ActiveScene->Spheres[payload.ObjectIndex];
+			const Material& material = m_ActiveScene->Materials[sphere.MaterialIndex];
 
-				const Sphere& sphere = m_ActiveScene->Spheres[payload.ObjectIndex];
-				const Material& material = m_ActiveScene->Materials[sphere.MaterialIndex];
-
-				if (lightPayload.HitDistance < 0.0f)
-				{
-					glm::vec3 sphereColor = material.Albedo;
-					sphereColor *= d;
-
+			if (lightPayload.HitDistance < 0.0f)
+			{
+				glm::vec3 sphereColor = material.Albedo;
+				sphereColor *= d;
 						
-					for (int w = 0; w < 4; w++)
+				for (int w = 0; w < 4; w++)
+				{	
+					float q = Walnut::Random::Float();
+					if (q > 0.85f)
 					{
-						
-						float q = Walnut::Random::Float();
-						if (q > 0.8f)
-						{
-							color += glm::vec3(0.0f);
-							//multiplier *= 0.2f;
-							w += 4;
-						}
-						else 
-						{
+						color += glm::vec3(0.0f);
+						//multiplier *= 0.2f;
+						w += 4;
+					}
+					else 
+					{
 						
 							ray.Direction = glm::reflect(ray.Direction,
 								payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
 
-							color += sphereColor * multiplier;
-
-						}
-						
-					}
-
+						color += sphereColor * multiplier;
+					}	
 				}
-				else
-				{
-					color += glm::vec3(0.0f) * d;
-				}
-
-				ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-
-				multiplier *= 0.4f;
-
 			}
+			else { color += glm::vec3(0.0f) * d; }
 
-					
-		
-		
+			ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
+
+			multiplier *= 0.4f;
+
+		}		
 	}
 
 	return glm::vec4(color, 1.0f);
@@ -193,6 +178,20 @@ std::pair<float, float> Renderer::intersectBox(const Ray& ray, const Box& box)
 	return { minVal, maxVal };
 }
 
+std::pair<float, float> Renderer::intersectPlane(const Ray& ray, const Plane& plane) {
+	float denominator = plane.a * ray.Direction.x + plane.b * ray.Direction.y + plane.c * ray.Direction.z;
+	if (denominator == 0.0f) {
+		return { -1.0f, -1.0f }; // Ray is parallel to the plane  
+	}
+	float t = -(plane.a * ray.Origin.x + plane.b * ray.Origin.y + plane.c * ray.Origin.z + plane.d) / denominator;
+	if (denominator < 0.0f || denominator > 0.0f) {
+		return { t, t };
+	}
+	else {
+		return { -1.0f, -1.0f }; // Ray is intersecting the plane from behind  
+	}
+
+}
 
 Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 {
@@ -229,14 +228,22 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 	{
 		const Box& box = m_ActiveScene->Boxes[i];
 		// Calcula a interseção do raio com a caixa
-		auto [tmin, tmax] = intersectBox(ray, box);
-
-		// Se houver interseção e a distância for menor que a menor encontrada até agora
-		if (tmax >= 0 && tmin <= tmax && tmax < hitDistance)
+		for (size_t j = 0; j < 6; j++) 
 		{
-			hitDistance = tmax;
-			closestObject = (int)i;
-			indentifier = 1;
+			auto [tmin, tmax] = intersectPlane(ray, box.planes[j]);
+			if (tmin <= tmax && tmax >= 0.0f && tmax <= hitDistance) {
+				// Check if the intersection point is within the box's bounds  
+				glm::vec3 intersectionPoint = ray.Origin + tmax * ray.Direction;
+				if (intersectionPoint.x >= box.Position.x && intersectionPoint.x <= box.Position.x + box.Width &&
+					intersectionPoint.y >= box.Position.y && intersectionPoint.y <= box.Position.y + box.Height &&
+					intersectionPoint.z >= box.Position.z && intersectionPoint.z <= box.Position.z + box.Depth) 
+				{
+					hitDistance = tmax;
+					closestObject = (int)i;
+					indentifier = 1;
+				}
+			}
+
 		}
 	}
 

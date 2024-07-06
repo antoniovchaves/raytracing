@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <algorithm> // Para std::copy
+#include "Ray.h"
 
 
 struct Material
